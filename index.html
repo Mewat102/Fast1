@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Send Message & Location</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: Arial; text-align: center;">
+
+  <h2>📩 Send Message with Location</h2>
+  <textarea id="message" placeholder="Enter your message" rows="4" cols="40"></textarea><br><br>
+  <button onclick="sendData()">Send</button>
+
+  <p id="status"></p>
+
+  <script>
+    function sendData() {
+      let message = document.getElementById("message").value;
+      if (!message) {
+        alert("Please enter a message first!");
+        return;
+      }
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          let lat = position.coords.latitude;
+          let lon = position.coords.longitude;
+
+          fetch("https://script.google.com/macros/s/AKfycbw6hZ7jx86ykaeMRkNoTsf4XbgNrqwSVVDLLquaVRtW8rZs3jqm2hKNM_sHYRqwQGzpQQ/exec", {
+            method: "POST",
+            body: JSON.stringify({
+              message: message,
+              latitude: lat,
+              longitude: lon
+            })
+          })
+          .then(res => res.text())
+          .then(data => {
+            document.getElementById("status").innerText = "✅ Sent Successfully!";
+          })
+          .catch(err => {
+            document.getElementById("status").innerText = "❌ Error sending data.";
+          });
+
+        }, function(error) {
+          alert("Location access denied!");
+        });
+      } else {
+        alert("Geolocation not supported by your browser.");
+      }
+    }
+  </script>
+
+</body>
+</html>
