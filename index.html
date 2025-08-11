@@ -1,68 +1,69 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Location + Message</title>
+  <title>Share Location + Message</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
+    h2 { color: #333; }
+    textarea, button { padding: 10px; margin-top: 10px; width: 100%; }
+    .success { color: green; }
+    .error { color: red; }
+  </style>
 </head>
 <body>
   <h2>Share Location + Message</h2>
+  <p id="status">Getting location...</p>
+  <textarea id="message" placeholder="Type your message"></textarea>
+  <button id="submitBtn">Submit</button>
+  <p id="result"></p>
 
-  <button onclick="getLocation()">📍 Get Location</button>
-  <p id="locMsg"></p>
+  <script>
+    let lat = null;
+    let lon = null;
+    const statusEl = document.getElementById('status');
+    const resultEl = document.getElementById('result');
 
-  <textarea id="msg" placeholder="Type your message..." rows="4" cols="30"></textarea><br><br>
-
-  <button onclick="submitData()">✅ Submit</button>
-  <p id="status"></p>
-
-<script>
-let latitude = '', longitude = '';
-
-function getLocation() {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        latitude = pos.coords.latitude;
-        longitude = pos.coords.longitude;
-        document.getElementById('locMsg').innerText = 
-          `Latitude: ${latitude}, Longitude: ${longitude}`;
-      },
-      (err) => {
-        document.getElementById('locMsg').innerText = 
-          '⚠ Location access denied or unavailable!';
+    // Page load par location le lo
+    window.onload = function() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(success, error);
+      } else {
+        statusEl.textContent = "Geolocation not supported.";
       }
-    );
-  } else {
-    document.getElementById('locMsg').innerText = '❌ Geolocation not supported.';
-  }
-}
+    };
 
-async function submitData() {
-  if (!latitude || !longitude) {
-    document.getElementById('status').innerText = '⚠ Please get location first!';
-    return;
-  }
+    function success(position) {
+      lat = position.coords.latitude;
+      lon = position.coords.longitude;
+      statusEl.textContent = `Latitude: ${lat}, Longitude: ${lon}`;
+    }
 
-  const payload = {
-    message: document.getElementById('msg').value,
-    latitude,
-    longitude
-  };
+    function error() {
+      statusEl.textContent = "Unable to get location.";
+    }
 
-  try {
-    const res = await fetch("https://script.google.com/macros/s/AKfycbz8suBhlxuRwNSyD_oZSAapQNTK3nZZY4Y3mr9RBqR1XJbZtrv4OGLwEv6IFOe2OKZ4Mg/exec", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+    document.getElementById('submitBtn').addEventListener('click', function() {
+      const message = document.getElementById('message').value;
+
+      if (!lat || !lon) {
+        resultEl.innerHTML = '<span class="error">Location not available!</span>';
+        return;
+      }
+
+      fetch("https://script.google.com/macros/s/AKfycbz8suBhlxuRwNSyD_oZSAapQNTK3nZZY4Y3mr9RBqR1XJbZtrv4OGLwEv6IFOe2OKZ4Mg/exec", {
+        method: "POST",
+        mode: "no-cors", 
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ latitude: lat, longitude: lon, message: message })
+      })
+      .then(() => {
+        resultEl.innerHTML = '<span class="success">Data sent successfully!</span>';
+      })
+      .catch(() => {
+        resultEl.innerHTML = '<span class="error">Network error!</span>';
+      });
     });
-
-    const json = await res.json();
-    document.getElementById('status').innerText = 
-      json.status === 'ok' ? '✅ Submitted successfully!' : '❌ Error submitting!';
-  } catch (e) {
-    document.getElementById('status').innerText = '❌ Network error!';
-  }
-}
-</script>
+  </script>
 </body>
 </html>
