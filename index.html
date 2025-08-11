@@ -1,128 +1,68 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome to Cyber crime Safety Hub</title>
-  <style>
-    body {
-      background-color: #DEE8CE;
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 20px;
-      color: #333;
-    }
-    h1 {
-      color: #BB6653;
-      margin-bottom: 10px;
-    }
-    p {
-      font-size: 16px;
-    }
-    textarea {
-      width: 80%;
-      height: 80px;
-      margin: 10px 0;
-      padding: 10px;
-      border: 2px solid #BB6653;
-      border-radius: 5px;
-      background-color: #FFF8E8;
-    }
-    button {
-      background-color: #BB6653;
-      color: white;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      margin: 5px;
-    }
-    button:disabled {
-      background-color: #ccc;
-      cursor: not-allowed;
-    }
-    #status {
-      margin-top: 10px;
-      font-weight: bold;
-      color: green;
-    }
-    #locMsg {
-      margin-top: 5px;
-      font-style: italic;
-    }
-  </style>
+  <title>Location + Message</title>
 </head>
 <body>
+  <h2>Share Location + Message</h2>
 
-<h1>Welcome to Cyber Safety Hub</h1>
-<p>Contact: 📞 9783593114 | ✉️ Sunilduttdubyips@gmail.com</p>
+  <button onclick="getLocation()">📍 Get Location</button>
+  <p id="locMsg"></p>
 
-<button onclick="getLocation()">📍 Share Location</button>
-<p id="locMsg"></p>
+  <textarea id="msg" placeholder="Type your message..." rows="4" cols="30"></textarea><br><br>
 
-<textarea id="msg" placeholder="Your message..."></textarea><br/>
-
-<button id="startRec">🎙 Start Recording</button>
-<button id="stopRec" disabled>⏹ Stop Recording</button><br/>
-
-<button id="submitBtn">📤 Submit</button>
-<p id="status"></p>
+  <button onclick="submitData()">✅ Submit</button>
+  <p id="status"></p>
 
 <script>
-let latitude='', longitude='', recorder, chunks=[];
+let latitude = '', longitude = '';
 
-function getLocation(){
-  navigator.geolocation.getCurrentPosition(p => {
-    latitude = p.coords.latitude;
-    longitude = p.coords.longitude;
-    document.getElementById('locMsg').textContent = `Location: ${latitude}, ${longitude}`;
-  }, e => document.getElementById('locMsg').textContent = '❌ Location denied or unavailable.');
+function getLocation() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        latitude = pos.coords.latitude;
+        longitude = pos.coords.longitude;
+        document.getElementById('locMsg').innerText = 
+          `Latitude: ${latitude}, Longitude: ${longitude}`;
+      },
+      (err) => {
+        document.getElementById('locMsg').innerText = 
+          '⚠ Location access denied or unavailable!';
+      }
+    );
+  } else {
+    document.getElementById('locMsg').innerText = '❌ Geolocation not supported.';
+  }
 }
 
-document.getElementById('startRec').onclick = async () => {
-  const stream = await navigator.mediaDevices.getUserMedia({audio:true});
-  recorder = new MediaRecorder(stream);
-  recorder.ondataavailable = e => chunks.push(e.data);
-  recorder.start();
-  document.getElementById('startRec').disabled = true;
-  document.getElementById('stopRec').disabled = false;
-};
-
-document.getElementById('stopRec').onclick = () => {
-  recorder.stop();
-  document.getElementById('startRec').disabled = false;
-  document.getElementById('stopRec').disabled = true;
-};
-
-document.getElementById('submitBtn').onclick = async () => {
-  let blobData = '', filename='', mime='';
-
-  if (chunks.length) {
-    const blob = new Blob(chunks, {type:'audio/webm'});
-    const arrayBuffer = await blob.arrayBuffer();
-    blobData = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-    filename = 'voice_' + Date.now() + '.webm';
-    mime = blob.type;
+async function submitData() {
+  if (!latitude || !longitude) {
+    document.getElementById('status').innerText = '⚠ Please get location first!';
+    return;
   }
 
   const payload = {
     message: document.getElementById('msg').value,
     latitude,
-    longitude,
-    blob: blobData,
-    filename,
-    mime
+    longitude
   };
 
-  const res = await fetch('https://script.google.com/macros/s/AKfycbxR0R955w_mC_E_PVIaT7WPsgO88a1Fu_BL0HnKpV1Rq2tXOp14TqQAJACOaEt9PFT_BA/exec', {
-    method: 'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify(payload)
-  });
-  const j = await res.json();
-  document.getElementById('status').textContent = j.status === 'ok' ? '✅ Submitted!' : '❌ Error: ' + j.error;
-};
-</script>
+  try {
+    const res = await fetch("https://script.google.com/macros/s/AKfycbz8suBhlxuRwNSyD_oZSAapQNTK3nZZY4Y3mr9RBqR1XJbZtrv4OGLwEv6IFOe2OKZ4Mg/exec", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
 
+    const json = await res.json();
+    document.getElementById('status').innerText = 
+      json.status === 'ok' ? '✅ Submitted successfully!' : '❌ Error submitting!';
+  } catch (e) {
+    document.getElementById('status').innerText = '❌ Network error!';
+  }
+}
+</script>
 </body>
 </html>
